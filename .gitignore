@@ -5,3 +5,6 @@ a.out
 test_file
 nasm
 test_file.asm
+.clang-format
+*.hex
+*.asm
