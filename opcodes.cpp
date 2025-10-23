@@ -1,4 +1,6 @@
 #include "opcodes.h"
+#include <array>
+#include <string>
 #include <unordered_map>
 
 std::unordered_map<uint8_t, Opcode> instruction_table = {
@@ -14,27 +16,26 @@ std::unordered_map<uint8_t, Opcode> instruction_table = {
     {0xbe, {0xbe, "mov", 0, 1}}, {0xbf, {0xbf, "mov", 0, 1}},
 };
 
-std::unordered_map<uint8_t, std::string> basic_register_table = {
-    {al, "al"}, {cl, "cl"}, {dl, "dl"}, {bl, "bl"}, {ah, "ah"}, {ch, "ch"},
-    {dh, "dh"}, {bh, "bh"}, {ax, "ax"}, {cx, "cx"}, {dx, "dx"}, {bx, "bx"},
-    {sp, "sp"}, {bp, "bp"}, {si, "si"}, {di, "di"},
+std::array<std::string_view, 16> basic_register_table = {
+    {"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh", "ax", "cx", "dx", "bx",
+     "sp", "bp", "si", "di"}};
 
-};
-
-std::unordered_map<uint8_t, InstructionFunction> instruction_functions = {
+std::unordered_map<uint8_t, OpcodeFunction> instruction_functions = {
     {0x88, &decode_mov},
     {0x89, &decode_mov},
     {0x8a, &decode_mov},
     {0x8b, &decode_mov},
 };
 
-std::unordered_map<uint8_t, std::string> effective_address = {
-    {0, "[BX + SI]"}, {1, "[BX + DI]"}, {2, "[BP + SI]"}, {3, "[BP + DI]"},
-    {4, "[SI]"},      {5, "[DI]"},      {6, "["},         {7, "[BX]"},
-    {8, "[BX + SI"},  {9, "[BX + DI"},  {10, "[BP + SI"}, {11, "[BP + DI"},
-    {12, "[SI"},      {13, "[DI"},      {14, ""},         {15, "[BX"},
-    {13, "[BX + SI"}, {14, "[BX + DI"}, {15, "[BP + SI"}, {16, "[BP + DI"},
-    {17, "[SI"},      {18, "[DI"},      {19, "[BP"},      {20, "[BX"},
+const std::array<std::array<std::string, 8>, 3> addressing_modes = {
+    {// mod 00
+     {{"[BX+SI]", "[BX+DI]", "[BP+SI]", "[BP+DI]", "[SI]", "[DI]", "", "[BX]"}},
+     // mod 01 {{"[BX+SI+disp8]"},
+     {"[BX+DI+disp8]", "[BP+SI+disp8]", "[BP+DI+disp8]", "[SI+disp8]",
+      "[DI+disp8]", "[BP+disp8]", "[BX+disp8]"},
+     // mod 10
+     {"[BX+SI+disp16]", "[BX+DI+disp16]", "[BP+SI+disp16]", "[BP+DI+disp16]",
+      "[SI+disp16]", "[DI+disp16]", "[BP+disp16]", "[BX+disp16]"}},
 };
 
 std::string instruction_decode(uint8_t opcode, uint8_t *memory,
@@ -71,11 +72,8 @@ std::string decode_mov(Opcode opcode, uint8_t *memory, size_t &stack_point) {
       output_string += basic_register_table[reg];
       output_string += ", ";
       output_string += basic_register_table[rm];
-    } else if (mod) {
     }
-  } else if (mod == 0b10) {
-  } else if (mod == 0b01) {
-  } else if (mod == 0b00) {
+  } else {
   }
   return output_string;
 }
@@ -94,18 +92,3 @@ uint8_t get_next_byte(uint8_t *memory, size_t &stack_point) {
   uint8_t output = memory[stack_point];
   return output;
 }
-
-/*
-typedef struct {
-  OperandType type;
-  std::string value;
-  uint8_t additional_bytes;
-} Operand;
-
-typedef struct {
-  uint8_t type;
-  std::string mnemonic;
-  uint8_t d_bit;
-  uint8_t w_bit;
-} Opcode;
-*/
